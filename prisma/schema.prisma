@@ -1,0 +1,646 @@
+datasource db {
+  provider     = "mongodb"
+  url          = env("DATABASE_URL")
+  relationMode = "prisma"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id                       String      @id @default(auto()) @map("_id") @db.ObjectId
+  name                     String
+  email                    String      @unique
+  emailVerified            DateTime?
+  lastAction               DateTime?   @default(now())
+  generalServerId          String      @default("")
+  image                    String
+  password                 String?
+  description              String?
+  profileType              ProfileType @default(USER)
+  categories               String[]
+  deviantWallet            String?
+  username                 String      @default("")
+  hashedPassword           String?
+  stripeAccountId          String?
+  isBankActive             Boolean     @default(false)
+  verificationCode         String?     @default("")
+  passwordResetAttempts    Int         @default(0)
+  lastPasswordResetRequest DateTime?
+  FCMTokens                String[]
+  ip                       String      @default("Not set")
+  defaultPostType          String      @default("THOUGHT")
+  defaultLangToTranslate   String      @default("en")
+  reputation               Int         @default(0)
+  newMessageCount          Int         @default(0)
+  version                  Int         @default(0)
+
+  // localisation
+  address         String  @default("")
+  isAddressPublic Boolean @default(false)
+  country         String  @default("")
+  longitude       Float   @default(0)
+  latitude        Float   @default(0)
+  isLLPublic      Boolean @default(false)
+
+  accounts Account[]
+  sessions Session[]
+  // Optional for WebAuthn support
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  conversationIds String[]       @db.ObjectId
+  conversations   Conversation[] @relation(fields: [conversationIds], references: [id])
+  seenMessageIds  String[]       @db.ObjectId
+  seenMessages    Message[]      @relation("Seen", fields: [seenMessageIds], references: [id])
+  messages        Message[]
+
+  Post                Post[]
+  Seen                Seen[]
+  Rating              Rating[]
+  Comment             Comment[]
+  privileges          Privilege[]
+  Publication         Publication[]
+  Authenticator       Authenticator[]
+  CommentReaction     CommentReaction[]
+  PublicationComment  PublicationComment[]
+  PublicationReaction PublicationReaction[]
+  // les personnes que l'user suit
+  following           Follow[]              @relation("Following")
+  // les personnes qui suivent l'user
+  followers           Follow[]              @relation("Followers")
+  administratedUsers  Admin[]               @relation("AdministratedUsers")
+  administrators      Admin[]               @relation("Administrators")
+  SearchHistory       SearchHistory[]
+  sentTransfers       Transfert[]           @relation("senderTransfert")
+  receivedTransfers   Transfert[]           @relation("recipientTransfert")
+  withdraw            Withdraw[]
+  Balance             Balance[]
+  Notification        Notification[]
+  Report              Report[]
+  // chat
+  servers             Server[]
+  members             Member[]
+  channels            Channel[]
+  BioLink             BioLink[]
+  Activity            Activity[]
+}
+
+model Follow {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  followerId  String   @db.ObjectId
+  followingId String   @db.ObjectId
+  createdAt   DateTime @default(now())
+  follower    User     @relation("Followers", fields: [followerId], references: [id], onDelete: Cascade)
+  following   User     @relation("Following", fields: [followingId], references: [id], onDelete: Cascade)
+  isConnected Boolean  @default(false)
+
+  @@unique([followerId, followingId])
+}
+
+model Admin {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  adminId   String   @db.ObjectId
+  userId    String   @db.ObjectId
+  createdAt DateTime @default(now())
+  admin     User     @relation("Administrators", fields: [adminId], references: [id], onDelete: Cascade)
+  user      User     @relation("AdministratedUsers", fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model SearchHistory {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  ownerId   String   @db.ObjectId
+  image     String?
+  link      String?
+  name      String?
+  text      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt()
+  owner     User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+}
+
+model Account {
+  id                String  @id @default(auto()) @map("_id") @db.ObjectId
+  userId            String  @db.ObjectId
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  sessionToken String   @unique
+  userId       String   @db.ObjectId
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model VerificationToken {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// Optional for WebAuthn support
+model Authenticator {
+  id                   String  @id @default(auto()) @map("_id") @db.ObjectId
+  credentialID         String  @unique
+  userId               String  @db.ObjectId
+  providerAccountId    String
+  credentialPublicKey  String
+  counter              Int
+  credentialDeviceType String
+  credentialBackedUp   Boolean
+  transports           String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// blog
+model Post {
+  id           String         @id @default(auto()) @map("_id") @db.ObjectId
+  authorId     String         @db.ObjectId
+  title        String
+  subtitle     String
+  content      String
+  image        String
+  readTime     Int
+  tagId        String
+  status       PostStatus
+  Seen         Seen[]
+  Rating       Rating[]
+  Comment      Comment[]
+  PostTopicRel PostTopicRel[]
+
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+  author             User                 @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  PublicationComment PublicationComment[]
+}
+
+model Comment {
+  id                   String            @id @default(auto()) @map("_id") @db.ObjectId
+  content              String
+  postId               String            @db.ObjectId
+  userId               String            @db.ObjectId
+  post                 Post              @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user                 User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reaction             CommentReaction[]
+  parentId             String?           @db.ObjectId
+  parent               Comment?          @relation("ChildComments", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  childComments        Comment[]         @relation("ChildComments")
+  publicationCommentId String?
+  createdAt            DateTime          @default(now())
+  updatedAt            DateTime          @updatedAt
+}
+
+model Rating {
+  id     String @id @default(auto()) @map("_id") @db.ObjectId
+  value  Int
+  postId String @db.ObjectId
+  userId String @db.ObjectId
+  post   Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Seen {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  ip        String?
+  postId    String   @db.ObjectId
+  userId    String?  @db.ObjectId
+  createdAt DateTime @default(now())
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model CommentReaction {
+  id       String   @id @default(auto()) @map("_id") @db.ObjectId
+  reaction Reaction
+
+  userId               String              @db.ObjectId
+  commentId            String?             @db.ObjectId
+  publicationCommentId String?             @db.ObjectId
+  user                 User?               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  comment              Comment?            @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  PublicationComment   PublicationComment? @relation(fields: [publicationCommentId], references: [id], onDelete: Cascade)
+  createdAt            DateTime            @default(now())
+}
+
+model PostTopicRel {
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
+  postId  String @db.ObjectId
+  topicId String @db.ObjectId
+
+  post  Post  @relation(fields: [postId], references: [id], onDelete: Cascade)
+  topic Topic @relation(fields: [topicId], references: [id], onDelete: Cascade)
+}
+
+model Topic {
+  id           String         @id @default(auto()) @map("_id") @db.ObjectId
+  name         String
+  PostTopicRel PostTopicRel[]
+}
+
+model Publication {
+  id                  String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId              String   @db.ObjectId
+  media               String[]
+  videoUrl            String?
+  content             String?
+  categories          String[]
+  type                String   @default("")
+  locationName        String   @default("")
+  locationDisplayName String   @default("")
+
+  isShare             Boolean   @default(false)
+  isShareCount        Int       @default(0)
+  originUserId        String?
+  originPublicationId String?
+  originCreatedAt     DateTime?
+  originUsername      String?
+  originUserImage     String?
+  originContent       String?
+  isOriginDeleted     Boolean?  @default(false)
+
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @updatedAt
+  user                User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reactions           PublicationReaction[]
+  PublicationComment  PublicationComment[]
+  PublicationLocation PublicationLocation[]
+
+  @@index([userId])
+}
+
+model PublicationReaction {
+  id            String      @id @default(auto()) @map("_id") @db.ObjectId
+  reaction      Reaction
+  userId        String      @db.ObjectId
+  publicationId String      @db.ObjectId
+  createdAt     DateTime    @default(now())
+  user          User?       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  publication   Publication @relation(fields: [publicationId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model PublicationComment {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  content       String
+  publicationId String   @db.ObjectId
+  userId        String   @db.ObjectId
+  parentId      String?  @db.ObjectId
+  postId        String?  @db.ObjectId
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  Post        Post?               @relation(fields: [postId], references: [id])
+  publication Publication         @relation(fields: [publicationId], references: [id], onDelete: Cascade)
+  user        User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  parent      PublicationComment? @relation("ChildComments", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  reaction      CommentReaction[]
+  childComments PublicationComment[] @relation("ChildComments")
+
+  @@index([userId])
+  @@index([publicationId])
+}
+
+enum PostStatus {
+  draft
+  online
+  archive
+}
+
+enum Reaction {
+  LIKE
+  DISLIKE
+  WOW
+  ANGRY
+  LAUGHT
+  TOGETHER
+}
+
+enum Privilege {
+  SU
+  REDACTOR
+}
+
+enum ProfileType {
+  USER
+  Association
+  Entreprise
+}
+
+model Conversation {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  createdAt     DateTime @default(now())
+  lastMessageAt DateTime @default(now())
+  name          String?
+  isGroup       Boolean?
+  isChannel     Boolean?
+
+  messagesIds String[]  @db.ObjectId
+  messages    Message[]
+
+  userIds String[] @db.ObjectId
+  users   User[]   @relation(fields: [userIds], references: [id])
+
+  @@index([userIds])
+}
+
+model Message {
+  id        String    @id @default(auto()) @map("_id") @db.ObjectId
+  body      String    @default("")
+  images    String[]
+  createdAt DateTime? @default(now())
+
+  seendIds String[] @db.ObjectId
+  seen     User[]   @relation("Seen", fields: [seendIds], references: [id])
+
+  conversationId String       @db.ObjectId
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  senderId String @db.ObjectId
+  sender   User   @relation(fields: [senderId], references: [id], onDelete: Cascade)
+}
+
+model Transfert {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  senderId    String   @db.ObjectId
+  recipientId String   @db.ObjectId
+  amount      Float
+  date        DateTime @default(now())
+
+  sender    User @relation(name: "senderTransfert", fields: [senderId], references: [id], onDelete: Cascade)
+  recipient User @relation(name: "recipientTransfert", fields: [recipientId], references: [id], onDelete: Cascade)
+}
+
+model Withdraw {
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId         String   @db.ObjectId
+  associatedName String?
+  amount         Float
+  paymentRef     String?
+  date           DateTime @default(now())
+
+  status Status
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+enum Status {
+  pending
+  aborted
+  success
+}
+
+model Balance {
+  id        String  @id @default(auto()) @map("_id") @db.ObjectId
+  amount    Float
+  isCurrent Boolean @default(false)
+  userId    String  @db.ObjectId
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Notification {
+  id       String   @id @default(auto()) @map("_id") @db.ObjectId
+  text     String
+  targetId String   @db.ObjectId
+  image    String
+  date     DateTime @default(now())
+  link     String
+  linkType String   @unique
+  type     String   @default("")
+  isSeen   Boolean  @default(false)
+  target   User     @relation(fields: [targetId], references: [id], onDelete: Cascade)
+
+  @@index([targetId])
+}
+
+model Report {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  reportedId   String   @db.ObjectId
+  description  String
+  date         DateTime @default(now())
+  image        String[]
+  reportType   String
+  resolved     Boolean  @default(false)
+  reporter     String   @db.ObjectId
+  reporterLink User     @relation(fields: [reporter], references: [id], onDelete: Cascade)
+}
+
+//chat 2.0
+model Server {
+  id         String @id @default(auto()) @map("_id") @db.ObjectId
+  name       String
+  imageUrl   String
+  inviteCode String @unique
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  userId    String   @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  members  Member[]
+  channels Channel[]
+
+  @@index([userId])
+}
+
+enum MemberRole {
+  ADMIN
+  MODERATOR
+  GUEST
+}
+
+model Member {
+  id             String          @id @default(auto()) @map("_id") @db.ObjectId
+  role           MemberRole      @default(GUEST)
+  userId         String          @db.ObjectId
+  serverId       String          @db.ObjectId
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  server         Server          @relation(fields: [serverId], references: [id], onDelete: Cascade)
+  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages       Mess[]
+  directMessages DirectMessage[]
+
+  discussionsInitiated Discussion[]        @relation("MemberOne")
+  discussionsReceived  Discussion[]        @relation("MemberTwo")
+  ChannelMembership    ChannelMembership[]
+
+  @@index([userId])
+  @@index([serverId])
+}
+
+enum ChannelType {
+  TEXT
+  AUDIO
+  VIDEO
+}
+
+model ChannelMembership {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  memberId  String   @db.ObjectId
+  channelId String   @db.ObjectId
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  role      String   @default("simple")
+  member    Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  channel   Channel  @relation(fields: [channelId], references: [id], onDelete: Cascade)
+
+  @@index([memberId])
+  @@index([channelId])
+}
+
+model Channel {
+  id                        String              @id @default(auto()) @map("_id") @db.ObjectId
+  name                      String
+  isAnnouncement            Boolean?            @default(false)
+  description               String?             @default("This is the general channel where you can say anything important you think of.")
+  type                      ChannelType         @default(TEXT)
+  image                     String              @default("")
+  isGroupDiscussion         Boolean?            @default(false)
+  isPrivateChannel          Boolean?            @default(false)
+  isAdminAprobationRequired Boolean?            @default(false)
+  createdAt                 DateTime            @default(now())
+  updatedAt                 DateTime            @updatedAt
+  userId                    String              @db.ObjectId
+  serverId                  String              @db.ObjectId
+  user                      User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  server                    Server              @relation(fields: [serverId], references: [id], onDelete: Cascade)
+  messages                  Mess[]
+  ChannelMembership         ChannelMembership[]
+
+  @@index([userId])
+  @@index([serverId])
+}
+
+model Mess {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  content   String
+  fileUrl   String?
+  files     String[] @default([])
+  deleted   Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  memberId  String   @db.ObjectId
+  channelId String   @db.ObjectId
+  member    Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  channel   Channel  @relation(fields: [channelId], references: [id], onDelete: Cascade)
+
+  @@index([memberId])
+  @@index([channelId])
+}
+
+model Discussion {
+  id             String          @id @default(auto()) @map("_id") @db.ObjectId
+  memberOneId    String          @db.ObjectId
+  memberTwoId    String          @db.ObjectId
+  memberOne      Member          @relation("MemberOne", fields: [memberOneId], references: [id], onDelete: Cascade)
+  memberTwo      Member          @relation("MemberTwo", fields: [memberTwoId], references: [id], onDelete: Cascade)
+  directMessages DirectMessage[]
+
+  @@unique([memberOneId, memberTwoId])
+  @@index([memberTwoId])
+}
+
+model DirectMessage {
+  id           String     @id @default(auto()) @map("_id") @db.ObjectId
+  content      String
+  fileUrl      String?
+  files        String[]   @default([])
+  deleted      Boolean    @default(false)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  memberId     String     @db.ObjectId
+  discussionId String     @db.ObjectId
+  member       Member     @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  discussion   Discussion @relation(fields: [discussionId], references: [id], onDelete: Cascade)
+
+  @@index([memberId])
+  @@index([discussionId])
+}
+
+model Location {
+  id           String @id @default(auto()) @map("_id") @db.ObjectId
+  place_id     Int
+  name         String
+  display_name String @unique
+  type         String
+  lat          String
+  lon          String
+}
+
+model tranlation {
+  id         String @id @default(auto()) @map("_id") @db.ObjectId
+  original   String
+  targetLang String
+  result     String
+}
+
+model BioLink {
+  id        String  @id @default(auto()) @map("_id") @db.ObjectId
+  facebook  String?
+  instagram String?
+  linkedin  String?
+  github    String?
+  userId    String  @unique @db.ObjectId
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Activity {
+  id        String  @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String  @db.ObjectId
+  place     String
+  type      String
+  isCurrent Boolean @default(false)
+  status    String?
+  DateStart String?
+  DateEnd   String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model PublicationLocation {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  publicationId String   @db.ObjectId
+  latitude      Float    @default(0)
+  longitude     Float    @default(0)
+  type          String
+  createdAt     DateTime @default(now())
+
+  publication Publication @relation(fields: [publicationId], references: [id], onDelete: Cascade)
+
+  @@index([publicationId])
+}
+
+model AddressPointHeat {
+  id        String @id @default(auto()) @map("_id") @db.ObjectId
+  latitude  Float?
+  longitude Float?
+  temps     Float?
+}
