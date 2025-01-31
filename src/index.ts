@@ -1,11 +1,11 @@
 import express from "express";
+import routes from "./routes";
 
 const app = express();
 const port = 3000;
 
-app.get("/", (req, res) => {
-  res.send("Hello World with Bun, Express, and TypeScript!");
-});
+app.use(express.json()); // Pour parser le JSON
+app.use("/", routes);
 
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
