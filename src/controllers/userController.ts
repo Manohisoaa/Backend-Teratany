@@ -1,6 +1,7 @@
-import { type Request, type Response } from "express";
-import { prisma } from "../prisma";
-import { createUserService } from "../services/userService";
+import type { Request, Response } from 'express';
+
+import { prisma } from '../prisma';
+import { createUserService } from '../services/userService';
 
 export const getAllUsers = async (req: Request, res: Response) => {
   const users = await prisma.user.findMany();
@@ -8,7 +9,7 @@ export const getAllUsers = async (req: Request, res: Response) => {
 };
 
 export const createUserController = async (req: Request, res: Response) => {
-  let { username, email, password, name, image } = req.body;
+  let { username, email, password } = req.body;
   if (!username) {
     res.status(400).json({ error: "username is required" });
   }
@@ -28,12 +29,6 @@ export const createUserController = async (req: Request, res: Response) => {
   if (!password) {
     res.status(400).json({ error: "password is required" });
   }
-  if (!name) {
-    res.status(400).json({ error: "name is required" });
-  }
-  if (!image) {
-    image = "image par defaut.png";
-  }
-  await createUserService(username, email, password, name, image);
+  await createUserService(username, email, password);
   res.json({ data: "ok" });
 };
