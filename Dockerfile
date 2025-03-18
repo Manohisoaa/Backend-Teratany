@@ -11,7 +11,7 @@ COPY . .
 RUN bun install
 
 # Générer les fichiers Prisma
-RUN npx prisma generate
+RUN bunx prisma generate
 
 # Exposer le port
 EXPOSE 3000
