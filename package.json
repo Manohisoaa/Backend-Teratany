@@ -2,6 +2,10 @@
   "name": "package.json",
   "module": "index.ts",
   "type": "module",
+  "scripts": {
+    "dev": "bun --watch run src/index.ts",
+    "start": "bun run index.ts"
+  },
   "devDependencies": {
     "@types/bun": "latest",
     "@types/express": "^5.0.0"
