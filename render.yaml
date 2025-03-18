@@ -1,0 +1,12 @@
+services:
+  - name: mon-app
+    type: web
+    runtime: docker
+    plan: free
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: PORT
+        sync: false
