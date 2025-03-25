@@ -1,23 +1,23 @@
-import bcrypt from 'bcryptjs';
+import bcrypt from "bcryptjs";
 
-import { prisma } from '../prisma';
+import { prisma } from "../prisma";
 
 export const createUser = async (
   username: string,
   email: string,
   password: string
 ) => {
+  const hashedPassword = await bcrypt.hash(password, 12);
   const user = await prisma.user.create({
     data: {
       username,
       email,
-      password,
+      hashedPassword: hashedPassword,
       name: username,
       image:
         "https://api.dicebear.com/8.x/notionists-neutral/svg?seed=" + email,
     },
   });
-  const hashedPassword = await bcrypt.hash(password, 12);
   return user;
 };
 
@@ -39,14 +39,16 @@ export const getUserByEmailAndPassword = async (
   email: string,
   password: string
 ) => {
-  // TO DO : hashena amin'ny bcrypt ilay password dia ilay resultat no atao parametre ana rehcerche ao amin'ny findFirst fa tsy password intsony
-  // TO DO : bun install bcryptjs
+  const hashedPassword = await bcrypt.hash(password, 12);
+
   const user = await prisma.user.findFirst({
     where: {
       email,
-      password,
+      hashedPassword,
     },
   });
-
+  // Autre methode:
+  // if (!user) return null;
+  // const isMatch = await bcrypt.compare(password, user.hashedPassword as string );
   return user;
 };
