@@ -36,7 +36,8 @@ export const getUserByEmailAndPassword = async (
   email: string,
   password: string
 ) => {
-  // TO DO: hashena amin'ny bcrypt ilay password dia ilay resultat no atao parametre ana rehcerche ao amin'ny findFirst fa tsy password intsony
+  // TO DO : hashena amin'ny bcrypt ilay password dia ilay resultat no atao parametre ana rehcerche ao amin'ny findFirst fa tsy password intsony
+  // TO DO : bun install bcryptjs
   const user = await prisma.user.findFirst({
     where: {
       email,
