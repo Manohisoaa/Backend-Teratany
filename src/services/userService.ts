@@ -1,3 +1,5 @@
+import bcrypt from 'bcryptjs';
+
 import { prisma } from '../prisma';
 
 export const createUser = async (
@@ -15,6 +17,7 @@ export const createUser = async (
         "https://api.dicebear.com/8.x/notionists-neutral/svg?seed=" + email,
     },
   });
+  const hashedPassword = await bcrypt.hash(password, 12);
   return user;
 };
 
