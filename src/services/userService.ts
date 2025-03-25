@@ -1,4 +1,4 @@
-import { prisma } from "../prisma";
+import { prisma } from '../prisma';
 
 export const createUser = async (
   username: string,
@@ -15,7 +15,6 @@ export const createUser = async (
         "https://api.dicebear.com/8.x/notionists-neutral/svg?seed=" + email,
     },
   });
-
   return user;
 };
 
@@ -37,6 +36,7 @@ export const getUserByEmailAndPassword = async (
   email: string,
   password: string
 ) => {
+  // TO DO: hashena amin'ny bcrypt ilay password dia ilay resultat no atao parametre ana rehcerche ao amin'ny findFirst fa tsy password intsony
   const user = await prisma.user.findFirst({
     where: {
       email,
