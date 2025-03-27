@@ -15,9 +15,9 @@ model User {
   emailVerified            DateTime?
   lastAction               DateTime?   @default(now())
   generalServerId          String      @default("")
-  image                    String
+  image                    String // pdp url
   password                 String?
-  description              String?
+  description              String? // bio
   profileType              ProfileType @default(USER)
   categories               String[]
   deviantWallet            String?

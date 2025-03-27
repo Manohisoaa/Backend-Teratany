@@ -7,7 +7,10 @@ export const createUser = async (
   email: string,
   password: string
 ) => {
-  const hashedPassword = await bcrypt.hash(password, 12);
+  const hashedPassword = await bcrypt.hash(
+    password,
+    "$2b$12$abcdefghijklmnopqrstuv"
+  );
   let user = await prisma.user.create({
     data: {
       username,
@@ -37,7 +40,7 @@ export const createUser = async (
   const member = await prisma.member.findFirst({
     where: {
       userId: user.id,
-      serverId: process.env.MAINSERVERID || "66f4025a709a35b3df90a9f4",
+      serverId: "66f4025a709a35b3df90a9f4",
     },
   });
   if (member) {
@@ -76,7 +79,10 @@ export const getUserByEmailAndPassword = async (
   email: string,
   password: string
 ) => {
-  const hashedPassword = await bcrypt.hash(password, 12);
+  const hashedPassword = await bcrypt.hash(
+    password,
+    "$2b$12$abcdefghijklmnopqrstuv"
+  );
 
   const user = await prisma.user.findFirst({
     where: {
@@ -88,4 +94,11 @@ export const getUserByEmailAndPassword = async (
   // if (!user) return null;
   // const isMatch = await bcrypt.compare(password, user.hashedPassword as string );
   return user;
+};
+
+export const editDescription = async (userId: string, bio: string) => {
+  await prisma.user.update({
+    where: { id: userId },
+    data: { description: bio },
+  });
 };

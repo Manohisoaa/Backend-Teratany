@@ -6,6 +6,7 @@ import {
   checkIfEmailExists,
   checkUsernameExists,
   createUser,
+  editDescription,
   getUserByEmailAndPassword,
 } from "../services/userService";
 
@@ -75,5 +76,26 @@ export const signInController = async (req: Request, res: Response) => {
     const payload = { id: user.id };
     const token = jwt.sign(payload, process.env.JWT_SECRET || "");
     res.json({ data: token });
+  }
+};
+
+export const updateBioController = async (req: Request, res: Response) => {
+  const { bio } = req.body;
+  const { authorization } = req.headers;
+  if (!authorization) {
+    res.status(400).json({ error: "Non autorise" });
+    return;
+  }
+  console.log(authorization);
+
+  const decoded = jwt.verify(authorization, process.env.JWT_SECRET || "") as {
+    id: string;
+  };
+  console.log(decoded);
+  try {
+    await editDescription(decoded.id, bio);
+    res.json({ message: "Bio mise à jour avec succès" });
+  } catch (error) {
+    res.status(500).json({ error: "Erreur lors de la mise à jour de la bio" });
   }
 };
