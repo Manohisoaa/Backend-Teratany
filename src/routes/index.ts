@@ -3,7 +3,9 @@ import {
   createUserController,
   getAllUsers,
   signInController,
-  updateBioController,
+  updateProfileController,
+  updatePictureController,
+  getCurrentUserController,
 } from "../controllers/userController";
 
 const router = express.Router();
@@ -11,5 +13,7 @@ const router = express.Router();
 router.get("/users", getAllUsers);
 router.post("/auth/signup", createUserController);
 router.post("/auth/signin", signInController);
-router.put("/user/bio", updateBioController);
+router.put("/user/profile", updateProfileController);
+router.put("/user/image", updatePictureController);
+router.get("/user/current", getCurrentUserController);
 export default router;

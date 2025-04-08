@@ -96,9 +96,29 @@ export const getUserByEmailAndPassword = async (
   return user;
 };
 
-export const editDescription = async (userId: string, bio: string) => {
+export const editProfile = async (
+  userId: string,
+  bio: string,
+  name: string,
+  username: string,
+  email: string
+) => {
   await prisma.user.update({
     where: { id: userId },
-    data: { description: bio },
+    data: { description: bio, name, username, email },
   });
+};
+
+export const updateProfilePicture = async (userId: string, image: string) => {
+  await prisma.user.update({
+    where: { id: userId },
+    data: { image },
+  });
+};
+
+export const getCurrentUser = async (userId: string) => {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+  });
+  return user;
 };

@@ -6,8 +6,10 @@ import {
   checkIfEmailExists,
   checkUsernameExists,
   createUser,
-  editDescription,
+  editProfile,
+  getCurrentUser,
   getUserByEmailAndPassword,
+  updateProfilePicture,
 } from "../services/userService";
 
 export const getAllUsers = async (req: Request, res: Response) => {
@@ -79,8 +81,8 @@ export const signInController = async (req: Request, res: Response) => {
   }
 };
 
-export const updateBioController = async (req: Request, res: Response) => {
-  const { bio } = req.body;
+export async function updateProfileController(req: Request, res: Response) {
+  const { bio, name, username, email } = req.body;
   const { authorization } = req.headers;
   if (!authorization) {
     res.status(400).json({ error: "Non autorise" });
@@ -88,14 +90,94 @@ export const updateBioController = async (req: Request, res: Response) => {
   }
   console.log(authorization);
 
+  if (!name) {
+    res.status(400).json({ error: "name is required" });
+    return;
+  }
+
+  if (!username) {
+    res.status(400).json({ error: "username is required" });
+    return;
+  }
+
+  if (!email) {
+    res.status(400).json({ error: "email is required" });
+    return;
+  } else {
+    const regexp = new RegExp(
+      /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
+    );
+    const isValidEmail = regexp.test(email);
+    if (!isValidEmail) {
+      res.status(400).json({ error: "email is invalid" });
+    }
+  }
+
+  if (await checkIfEmailExists(email)) {
+    res.status(400).json({ error: "email already exists" });
+    return;
+  }
+
+  if (await checkUsernameExists(username)) {
+    res.status(400).json({ error: "username already exists" });
+    return;
+  }
+
+  interface DecodedToken {
+    id: string;
+  }
+
+  const decoded = jwt.verify(
+    authorization,
+    process.env.JWT_SECRET || ""
+  ) as DecodedToken;
+
+  console.log(decoded);
+  try {
+    await editProfile(decoded.id, bio, name, username, email);
+    res.json({ message: "Profile mise à jour avec succès" });
+  } catch (error) {
+    res.status(500).json({ error: "Erreur lors de la mise à jour du profile" });
+  }
+}
+
+export const updatePictureController = async (req: Request, res: Response) => {
+  console.log("here");
+
+  const { profilePicture } = req.body;
+  const { authorization } = req.headers;
+  if (!authorization) {
+    res.status(400).json({ error: "Non autorise" });
+    return;
+  }
   const decoded = jwt.verify(authorization, process.env.JWT_SECRET || "") as {
     id: string;
   };
-  console.log(decoded);
   try {
-    await editDescription(decoded.id, bio);
-    res.json({ message: "Bio mise à jour avec succès" });
+    await updateProfilePicture(decoded.id, profilePicture);
+    res.json({ message: "Photo de profil mise à jour avec succès" });
   } catch (error) {
-    res.status(500).json({ error: "Erreur lors de la mise à jour de la bio" });
+    res
+      .status(500)
+      .json({ error: "Erreur lors de la mise à jour de la photo de profil" });
+  }
+};
+
+export const getCurrentUserController = async (req: Request, res: Response) => {
+  const { authorization } = req.headers;
+  if (!authorization) {
+    res.status(400).json({ error: "Non autorise" });
+    return;
+  }
+  const decoded = jwt.verify(authorization, process.env.JWT_SECRET || "") as {
+    id: string;
+  };
+  try {
+    const user = await getCurrentUser(decoded.id);
+    res.json(user);
+  } catch (error) {
+    res
+      .status(500)
+      .json({ error: "Erreur lors de la récupération de l'utilisateur" });
   }
 };
