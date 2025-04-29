@@ -8,6 +8,7 @@ import {
   getCurrentUserController,
   searchUsersController,
   getOneUserController,
+  getUserFollowersController,
 } from "../controllers/userController";
 
 const router = express.Router();
@@ -20,4 +21,6 @@ router.post("/auth/signin", signInController);
 router.put("/user/profile", updateProfileController);
 router.put("/user/image", updatePictureController);
 router.get("/user/current", getCurrentUserController);
+router.get("/user/:id/followers", getUserFollowersController);
+// router.get("/user/:id/following", getUserFollowingController);
 export default router;

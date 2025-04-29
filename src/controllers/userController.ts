@@ -219,3 +219,30 @@ export const getOneUserController = async (req: Request, res: Response) => {
   }
   res.json(user);
 };
+
+export const getUserFollowersController = async (
+  req: Request,
+  res: Response
+) => {
+  const { id } = req.params;
+
+  const count = await prisma.follow.count({ where: { followerId: id } });
+  console.log(count);
+
+  const data = await prisma.follow.findMany({
+    where: { followerId: id },
+    include: {
+      follower: {
+        select: {
+          id: true,
+          name: true,
+          username: true,
+          image: true,
+          lastAction: true,
+          profileType: true,
+        },
+      },
+    },
+  });
+  res.json(data);
+};
