@@ -12,6 +12,7 @@ import {
   updateProfilePicture,
   searchUsers,
 } from "../services/userService";
+import { ProfileType } from "@prisma/client";
 
 export const getAllUsers = async (req: Request, res: Response) => {
   const users = await prisma.user.findMany();
@@ -184,14 +185,26 @@ export const getCurrentUserController = async (req: Request, res: Response) => {
 };
 
 export const searchUsersController = async (req: Request, res: Response) => {
-  const { text } = req.query;
+  let { text, profileType } = req.query;
 
   if (!text) {
-    res.status(400).json({ error: "text is required in query" });
+    text = "@";
+  }
+
+  if (
+    profileType &&
+    !Object.values(ProfileType).includes(profileType as ProfileType)
+  ) {
+    res.status(400).json({
+      error: "Invalid profileType. Must be USER or Association or Entreprise",
+    });
     return;
   }
 
-  const users = await searchUsers(text as string);
+  const users = await searchUsers(
+    text as string,
+    profileType as ProfileType | undefined
+  );
 
   res.json(users);
 };

@@ -1,6 +1,7 @@
 import bcrypt from "bcryptjs";
 
 import { prisma } from "../prisma";
+import type { ProfileType } from "@prisma/client";
 
 export const createUser = async (
   username: string,
@@ -123,7 +124,49 @@ export const getCurrentUser = async (userId: string) => {
   return user;
 };
 
-export const searchUsers = async (text: string) => {
+export const searchUsers = async (
+  text: string,
+  profileType: ProfileType | undefined
+) => {
+  if (profileType) {
+    const users = await prisma.user.findMany({
+      where: {
+        OR: [
+          {
+            username: {
+              contains: text,
+              mode: "insensitive",
+            },
+          },
+          {
+            name: {
+              contains: text,
+              mode: "insensitive",
+            },
+          },
+          {
+            email: {
+              contains: text,
+              mode: "insensitive",
+            },
+          },
+        ],
+        profileType: profileType,
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+      select: {
+        id: true,
+        username: true,
+        image: true,
+        lastAction: true,
+        profileType: true,
+      },
+      take: 10,
+    });
+    return users;
+  }
   const users = await prisma.user.findMany({
     where: {
       OR: [
@@ -149,6 +192,13 @@ export const searchUsers = async (text: string) => {
     },
     orderBy: {
       createdAt: "desc",
+    },
+    select: {
+      id: true,
+      username: true,
+      image: true,
+      lastAction: true,
+      profileType: true,
     },
     take: 10,
   });
