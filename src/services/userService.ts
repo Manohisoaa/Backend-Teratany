@@ -122,3 +122,35 @@ export const getCurrentUser = async (userId: string) => {
   });
   return user;
 };
+
+export const searchUsers = async (text: string) => {
+  const users = await prisma.user.findMany({
+    where: {
+      OR: [
+        {
+          username: {
+            contains: text,
+            mode: "insensitive",
+          },
+        },
+        {
+          name: {
+            contains: text,
+            mode: "insensitive",
+          },
+        },
+        {
+          email: {
+            contains: text,
+            mode: "insensitive",
+          },
+        },
+      ],
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+    take: 10,
+  });
+  return users;
+};

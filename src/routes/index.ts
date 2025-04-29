@@ -6,11 +6,13 @@ import {
   updateProfileController,
   updatePictureController,
   getCurrentUserController,
+  searchUsersController,
 } from "../controllers/userController";
 
 const router = express.Router();
 
 router.get("/users", getAllUsers);
+router.get("/users/search", searchUsersController);
 router.post("/auth/signup", createUserController);
 router.post("/auth/signin", signInController);
 router.put("/user/profile", updateProfileController);

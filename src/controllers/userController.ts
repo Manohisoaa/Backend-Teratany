@@ -10,6 +10,7 @@ import {
   getCurrentUser,
   getUserByEmailAndPassword,
   updateProfilePicture,
+  searchUsers,
 } from "../services/userService";
 
 export const getAllUsers = async (req: Request, res: Response) => {
@@ -180,4 +181,17 @@ export const getCurrentUserController = async (req: Request, res: Response) => {
       .status(500)
       .json({ error: "Erreur lors de la récupération de l'utilisateur" });
   }
+};
+
+export const searchUsersController = async (req: Request, res: Response) => {
+  const { text } = req.query;
+
+  if (!text) {
+    res.status(400).json({ error: "text is required in query" });
+    return;
+  }
+
+  const users = await searchUsers(text as string);
+
+  res.json(users);
 };
