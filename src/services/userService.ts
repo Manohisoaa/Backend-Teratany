@@ -117,9 +117,25 @@ export const updateProfilePicture = async (userId: string, image: string) => {
   });
 };
 
-export const getCurrentUser = async (userId: string) => {
+export const getCurrentUser = async (id: string) => {
   const user = await prisma.user.findUnique({
-    where: { id: userId },
+    where: { id },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      username: true,
+      image: true,
+      lastAction: true,
+      profileType: true,
+      _count: {
+        select: {
+          Publication: true,
+          followers: true,
+          following: true,
+        },
+      },
+    },
   });
   return user;
 };
@@ -199,8 +215,32 @@ export const searchUsers = async (
       image: true,
       lastAction: true,
       profileType: true,
+      email: true,
     },
     take: 10,
   });
   return users;
+};
+
+export const getUserById = async (id: string) => {
+  const user = await prisma.user.findUnique({
+    where: { id },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      username: true,
+      image: true,
+      lastAction: true,
+      profileType: true,
+      _count: {
+        select: {
+          Publication: true,
+          followers: true,
+          following: true,
+        },
+      },
+    },
+  });
+  return user;
 };

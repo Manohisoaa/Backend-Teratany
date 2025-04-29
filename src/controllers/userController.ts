@@ -11,6 +11,7 @@ import {
   getUserByEmailAndPassword,
   updateProfilePicture,
   searchUsers,
+  getUserById,
 } from "../services/userService";
 import { ProfileType } from "@prisma/client";
 
@@ -207,4 +208,14 @@ export const searchUsersController = async (req: Request, res: Response) => {
   );
 
   res.json(users);
+};
+
+export const getOneUserController = async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const user = await getUserById(id);
+  if (!user) {
+    res.status(404).json({ error: "User not found" });
+    return;
+  }
+  res.json(user);
 };
