@@ -1,5 +1,6 @@
 import express from "express";
-import router from "./routes";
+import userRouter from "./routes/user.routes";
+import publicationRouter from "./routes/publication.routes";
 import morgan from "morgan";
 import compression from "compression";
 const app = express();
@@ -12,7 +13,9 @@ app.use(
   })
 );
 app.use(morgan("dev"));
-app.use("/", router);
+
+app.use("/publication", publicationRouter);
+app.use("/", userRouter);
 
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);

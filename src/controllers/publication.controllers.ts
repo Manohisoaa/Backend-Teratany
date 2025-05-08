@@ -1,0 +1,122 @@
+import type { Request, Response } from "express";
+import jwt from "jsonwebtoken";
+import type { Location, User } from "@prisma/client";
+import { prisma } from "../prisma";
+
+import { currentUser } from "../utils";
+import { incrementHeat } from "../services/map.services";
+import {
+  publish,
+  sharePublication,
+  translateToAll,
+} from "../services/publication.services";
+
+export const publishController = async (req: Request, res: Response) => {
+  const user = await currentUser(req);
+  const { content, categories, media, type, videoUrl, location } = req.body;
+
+  if (typeof content !== "string") {
+    res.status(400).json({ error: "Content must be a string" });
+    return;
+  }
+
+  if (
+    !Array.isArray(categories) ||
+    !categories.every((cat) => typeof cat === "string")
+  ) {
+    res.status(400).json({ error: "Categories must be an array of strings" });
+    return;
+  }
+
+  if (!Array.isArray(media) || !media.every((m) => typeof m === "string")) {
+    res.status(400).json({ error: "Media must be an array of strings" });
+    return;
+  }
+
+  if (typeof type !== "string") {
+    res.status(400).json({ error: "Type must be a string" });
+    return;
+  }
+
+  if (typeof videoUrl !== "string") {
+    res.status(400).json({ error: "Video URL must be a string" });
+    return;
+  }
+
+  if (location) {
+    if (typeof location.lat !== "string") {
+      res.status(400).json({ error: "Location latitude must be a string" });
+      return;
+    }
+    if (typeof location.lon !== "string") {
+      res.status(400).json({ error: "Location longitude must be a string" });
+      return;
+    }
+    if (typeof location.name !== "string") {
+      res.status(400).json({ error: "Location name must be a string" });
+      return;
+    }
+    if (typeof location.display_name !== "string") {
+      res.status(400).json({ error: "Location display name must be a string" });
+      return;
+    }
+    if (!location.place_id) {
+      res.status(400).json({ error: "Location place ID must be a number" });
+      return;
+    }
+    if (typeof location.type !== "string") {
+      res.status(400).json({ error: "Location type must be a string" });
+      return;
+    }
+  }
+
+  if (!user) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+
+  await publish(
+    user.id,
+    media,
+    categories,
+    content,
+    type,
+    videoUrl,
+    location as Location | null
+  );
+  res.json({
+    message: "Publication created",
+  });
+};
+
+export const sharePublicationController = async (
+  req: Request,
+  res: Response
+) => {
+  const user = await currentUser(req);
+  const { publicationId } = req.params;
+  const { content } = req.body;
+
+  if (typeof content !== "string") {
+    res.status(400).json({ error: "Content must be a string" });
+    return;
+  }
+
+  if (!user) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+  try {
+    const sharedPublication = await sharePublication(
+      user.id,
+      publicationId,
+      content
+    );
+    res.json({
+      message: "Publication shared",
+      publicationId: sharedPublication.id,
+    });
+  } catch (error) {
+    res.status(404).json({ message: "Publication not found" });
+  }
+};

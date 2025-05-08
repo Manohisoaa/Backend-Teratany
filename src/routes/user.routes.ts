@@ -9,7 +9,9 @@ import {
   searchUsersController,
   getOneUserController,
   getUserFollowersController,
-} from "../controllers/userController";
+  getUserFollowingController,
+  followUserController,
+} from "../controllers/user.controllers";
 
 const router = express.Router();
 
@@ -22,5 +24,6 @@ router.put("/user/profile", updateProfileController);
 router.put("/user/image", updatePictureController);
 router.get("/user/current", getCurrentUserController);
 router.get("/user/:id/followers", getUserFollowersController);
-// router.get("/user/:id/following", getUserFollowingController);
+router.get("/user/:id/following", getUserFollowingController);
+router.post("/user/:id/follow", followUserController);
 export default router;

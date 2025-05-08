@@ -23,37 +23,37 @@ export const createUser = async (
     },
   });
 
-  await prisma.server.update({
-    where: {
-      id: "66f4025a709a35b3df90a9f4",
-    },
-    data: {
-      members: {
-        create: [
-          {
-            userId: user.id,
-          },
-        ],
-      },
-    },
-  });
+  // await prisma.server.update({
+  //   where: {
+  //     id: "66f4025a709a35b3df90a9f4",
+  //   },
+  //   data: {
+  //     members: {
+  //       create: [
+  //         {
+  //           userId: user.id,
+  //         },
+  //       ],
+  //     },
+  //   },
+  // });
 
-  const member = await prisma.member.findFirst({
-    where: {
-      userId: user.id,
-      serverId: "66f4025a709a35b3df90a9f4",
-    },
-  });
-  if (member) {
-    user = await prisma.user.update({
-      where: {
-        id: user.id,
-      },
-      data: {
-        generalServerId: member.id,
-      },
-    });
-  }
+  // const member = await prisma.member.findFirst({
+  //   where: {
+  //     userId: user.id,
+  //     serverId: "66f4025a709a35b3df90a9f4",
+  //   },
+  // });
+  // if (member) {
+  //   user = await prisma.user.update({
+  //     where: {
+  //       id: user.id,
+  //     },
+  //     data: {
+  //       generalServerId: member.id,
+  //     },
+  //   });
+  // }
 
   // TODO : faire un getClientIp ici pour avoir l'IP de l'utilisateur
   // TODO : get la localisation long lat de l'utilisateur

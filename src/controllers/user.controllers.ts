@@ -12,8 +12,9 @@ import {
   updateProfilePicture,
   searchUsers,
   getUserById,
-} from "../services/userService";
+} from "../services/user.services";
 import { ProfileType } from "@prisma/client";
+import { currentUser } from "../utils";
 
 export const getAllUsers = async (req: Request, res: Response) => {
   const users = await prisma.user.findMany();
@@ -38,6 +39,7 @@ export const createUserController = async (req: Request, res: Response) => {
     const isValidEmail = regexp.test(email);
     if (!isValidEmail) {
       res.status(400).json({ error: "email is invalid" });
+      return;
     }
   }
 
@@ -226,8 +228,28 @@ export const getUserFollowersController = async (
 ) => {
   const { id } = req.params;
 
-  const count = await prisma.follow.count({ where: { followerId: id } });
-  console.log(count);
+  const data = await prisma.follow.findMany({
+    where: { followingId: id },
+    include: {
+      following: {
+        select: {
+          id: true,
+          name: true,
+          username: true,
+          image: true,
+          lastAction: true,
+          profileType: true,
+        },
+      },
+    },
+  });
+  res.json(data);
+};
+export const getUserFollowingController = async (
+  req: Request,
+  res: Response
+) => {
+  const { id } = req.params;
 
   const data = await prisma.follow.findMany({
     where: { followerId: id },
@@ -245,4 +267,42 @@ export const getUserFollowersController = async (
     },
   });
   res.json(data);
+};
+
+export const followUserController = async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const user = await currentUser(req);
+
+  if (!user) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+  try {
+    const data = await prisma.follow.findFirst({
+      where: {
+        followerId: user.id,
+        followingId: id,
+      },
+    });
+
+    if (data) {
+      await prisma.follow.deleteMany({
+        where: {
+          followerId: user.id,
+          followingId: id,
+        },
+      });
+      res.json({ message: "User unfollowed successfully" });
+    } else {
+      await prisma.follow.create({
+        data: {
+          followerId: user.id,
+          followingId: id,
+        },
+      });
+      res.json({ message: "User followed successfully" });
+    }
+  } catch (error) {
+    res.status(500).json({ error: "Error following user" });
+  }
 };
