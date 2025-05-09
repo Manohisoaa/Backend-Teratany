@@ -29,8 +29,6 @@ const calculateDistance = (
 };
 
 export const incrementHeat = async (longitude: number, latitude: number) => {
-  ("increment");
-
   // Récupérer tous les points pour effectuer un filtrage local
   const allPoints = await prisma.addressPointHeat.findMany();
 

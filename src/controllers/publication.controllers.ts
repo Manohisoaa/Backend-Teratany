@@ -120,3 +120,43 @@ export const sharePublicationController = async (
     res.status(404).json({ message: "Publication not found" });
   }
 };
+
+export const commentPublicatonController = async (
+  req: Request,
+  res: Response
+) => {
+  const user = await currentUser(req);
+  const { publicationId } = req.params;
+  const { content } = req.body;
+
+  if (typeof content !== "string") {
+    res.status(400).json({ error: "Content must be a string" });
+    return;
+  }
+
+  if (!user) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+
+  const publication = await prisma.publication.findUnique({
+    where: { id: publicationId },
+  });
+
+  if (!publication) {
+    res.status(404).json({ error: "Publication not found" });
+    return;
+  }
+
+  const newComment = await prisma.publicationComment.create({
+    data: {
+      userId: user.id,
+      publicationId: publicationId,
+      content,
+    },
+  });
+  res.json({
+    message: "Comment added",
+    comment: newComment,
+  });
+};
