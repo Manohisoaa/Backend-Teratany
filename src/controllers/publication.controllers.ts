@@ -241,3 +241,80 @@ export const getPublicationController = async (req: Request, res: Response) => {
 
   res.json(publication);
 };
+
+export const getCommentsController = async (req: Request, res: Response) => {
+  const { publicationId } = req.params;
+  const user = await currentUser(req);
+
+  if (!user) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+
+  try {
+    const comments = await prisma.publicationComment.findMany({
+      where: { publicationId },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            username: true,
+            image: true,
+            lastAction: true,
+            profileType: true,
+          },
+        },
+        _count: {
+          select: {
+            reaction: true,
+          },
+        },
+      },
+    });
+
+    res.json(comments);
+  } catch (error) {
+    res.status(500).json({ error: "Error fetching comments" });
+  }
+};
+
+export const reactCommentController = async (req: Request, res: Response) => {
+  const { commentId } = req.params;
+  const user = await currentUser(req);
+
+  if (!user) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+
+  try {
+    const data = await prisma.commentReaction.findFirst({
+      where: {
+        publicationCommentId: commentId,
+        userId: user.id,
+      },
+    });
+
+    if (data) {
+      await prisma.commentReaction.deleteMany({
+        where: {
+          publicationCommentId: commentId,
+          userId: user.id,
+        },
+      });
+      res.json({ message: "Comment unlike" });
+    } else {
+      await prisma.commentReaction.create({
+        data: {
+          publicationCommentId: commentId,
+          userId: user.id,
+          reaction: Reaction.LIKE,
+        },
+      });
+      res.json({ message: "Comment like" });
+    }
+  } catch (error) {
+    res.status(500).json({ error: error });
+  }
+};
