@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
 import jwt from "jsonwebtoken";
-import type { Location, User } from "@prisma/client";
+import { Reaction, type Location, type User } from "@prisma/client";
 import { prisma } from "../prisma";
 
 import { currentUser } from "../utils";
@@ -159,4 +159,85 @@ export const commentPublicatonController = async (
     message: "Comment added",
     comment: newComment,
   });
+};
+
+export const reactPublicatonController = async (
+  req: Request,
+  res: Response
+) => {
+  const { publicationId } = req.params;
+  const user = await currentUser(req);
+
+  if (!user) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+  try {
+    const data = await prisma.publicationReaction.findFirst({
+      where: {
+        publicationId: publicationId,
+        userId: user.id,
+      },
+    });
+
+    if (data) {
+      await prisma.publicationReaction.deleteMany({
+        where: {
+          publicationId: publicationId,
+          userId: user.id,
+        },
+      });
+      res.json({ message: "Publication unlike" });
+    } else {
+      await prisma.publicationReaction.create({
+        data: {
+          publicationId: publicationId,
+          userId: user.id,
+          reaction: Reaction.LIKE,
+        },
+      });
+      res.json({ message: "Publication like" });
+    }
+  } catch (error) {
+    res.status(500).json({ error: error });
+  }
+};
+
+export const getPublicationController = async (req: Request, res: Response) => {
+  const { publicationId } = req.params;
+  const user = await currentUser(req);
+
+  if (!user) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+
+  const publication = await prisma.publication.findUnique({
+    where: { id: publicationId },
+    include: {
+      user: {
+        select: {
+          id: true,
+          name: true,
+          username: true,
+          image: true,
+          lastAction: true,
+          profileType: true,
+        },
+      },
+      _count: {
+        select: {
+          PublicationComment: true,
+          reactions: true,
+        },
+      },
+    },
+  });
+
+  if (!publication) {
+    res.status(404).json({ error: "Publication not found" });
+    return;
+  }
+
+  res.json(publication);
 };
