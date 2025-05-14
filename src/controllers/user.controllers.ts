@@ -169,16 +169,9 @@ export const updatePictureController = async (req: Request, res: Response) => {
 };
 
 export const getCurrentUserController = async (req: Request, res: Response) => {
-  const { authorization } = req.headers;
-  if (!authorization) {
-    res.status(400).json({ error: "Non autorise" });
-    return;
-  }
-  const decoded = jwt.verify(authorization, process.env.JWT_SECRET || "") as {
-    id: string;
-  };
   try {
-    const user = await getCurrentUser(decoded.id);
+    const user = await currentUser(req);
+
     res.json(user);
   } catch (error) {
     res
