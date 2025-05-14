@@ -17,7 +17,6 @@ const router = express.Router();
 
 router.get("/users", getAllUsers);
 router.get("/users/search", searchUsersController);
-router.get("/user/:id", getOneUserController);
 router.post("/auth/signup", createUserController);
 router.post("/auth/signin", signInController);
 router.put("/user/profile", updateProfileController);
@@ -26,4 +25,5 @@ router.get("/user/current", getCurrentUserController);
 router.get("/user/:id/followers", getUserFollowersController);
 router.get("/user/:id/following", getUserFollowingController);
 router.post("/user/:id/follow", followUserController);
+router.get("/user/:id", getOneUserController);
 export default router;
