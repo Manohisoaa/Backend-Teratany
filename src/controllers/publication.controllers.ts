@@ -362,3 +362,19 @@ export const getUserPublicatonsController = async (
     return;
   }
 };
+
+export const getAllPublicationsController = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    const publications = await prisma.publication.findMany({
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+    res.json(publications);
+  } catch (error) {
+    res.status(500).json({ error: "Error fetching publications" });
+  }
+};
