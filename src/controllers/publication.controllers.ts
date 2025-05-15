@@ -318,3 +318,47 @@ export const reactCommentController = async (req: Request, res: Response) => {
     res.status(500).json({ error: error });
   }
 };
+
+export const getUserPublicatonsController = async (
+  req: Request,
+  res: Response
+) => {
+  const { userId } = req.params;
+  const user = await currentUser(req);
+  if (!user) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+  try {
+    const data = await prisma.publication.findMany({
+      where: {
+        userId,
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            username: true,
+            image: true,
+            lastAction: true,
+            profileType: true,
+          },
+        },
+        _count: {
+          select: {
+            PublicationComment: true,
+            reactions: true,
+          },
+        },
+      },
+    });
+    res.json(data);
+  } catch (error) {
+    res.status(500).json({ error: "Error fetching publications" });
+    return;
+  }
+};
