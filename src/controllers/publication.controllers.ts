@@ -372,6 +372,24 @@ export const getAllPublicationsController = async (
       orderBy: {
         createdAt: "desc",
       },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            username: true,
+            image: true,
+            lastAction: true,
+            profileType: true,
+          },
+        },
+        _count: {
+          select: {
+            PublicationComment: true,
+            reactions: true,
+          },
+        },
+      },
     });
     res.json(publications);
   } catch (error) {
