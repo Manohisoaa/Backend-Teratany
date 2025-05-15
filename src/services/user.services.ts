@@ -230,6 +230,7 @@ export const getUserById = async (id: string) => {
       name: true,
       email: true,
       username: true,
+      description: true,
       image: true,
       lastAction: true,
       profileType: true,
