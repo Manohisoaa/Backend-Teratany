@@ -203,45 +203,6 @@ export const reactPublicatonController = async (
   }
 };
 
-export const getPublicationController = async (req: Request, res: Response) => {
-  const { publicationId } = req.params;
-  const user = await currentUser(req);
-
-  if (!user) {
-    res.status(401).json({ error: "Unauthorized" });
-    return;
-  }
-
-  const publication = await prisma.publication.findUnique({
-    where: { id: publicationId },
-    include: {
-      user: {
-        select: {
-          id: true,
-          name: true,
-          username: true,
-          image: true,
-          lastAction: true,
-          profileType: true,
-        },
-      },
-      _count: {
-        select: {
-          PublicationComment: true,
-          reactions: true,
-        },
-      },
-    },
-  });
-
-  if (!publication) {
-    res.status(404).json({ error: "Publication not found" });
-    return;
-  }
-
-  res.json(publication);
-};
-
 export const getCommentsController = async (req: Request, res: Response) => {
   const { publicationId } = req.params;
   const user = await currentUser(req);
@@ -422,6 +383,11 @@ export const getAllPublicationsController = async (
   res: Response
 ) => {
   try {
+    const user = await currentUser(req);
+    if (!user) {
+      res.status(401).json({ error: "Unauthorized" });
+      return;
+    }
     const publications = await prisma.publication.findMany({
       orderBy: {
         createdAt: "desc",
@@ -437,6 +403,11 @@ export const getAllPublicationsController = async (
             profileType: true,
           },
         },
+        reactions: {
+          select: {
+            userId: true,
+          },
+        },
         _count: {
           select: {
             PublicationComment: true,
@@ -445,8 +416,71 @@ export const getAllPublicationsController = async (
         },
       },
     });
-    res.json(publications);
+    let publicationWithIsLiked = [];
+    for (const publication of publications) {
+      const isLiked = publication.reactions.some(
+        (reaction) => reaction.userId === user.id
+      );
+      // Retirer le champ reactions de publication
+      const { reactions, ...publicationWithoutReactions } = publication as any;
+      publicationWithIsLiked.push({
+        ...publicationWithoutReactions,
+        isLiked,
+      });
+    }
+    res.json(publicationWithIsLiked);
   } catch (error) {
     res.status(500).json({ error: "Error fetching publications" });
   }
+};
+export const getPublicationController = async (req: Request, res: Response) => {
+  const { publicationId } = req.params;
+  const user = await currentUser(req);
+
+  if (!user) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+
+  const publication = await prisma.publication.findUnique({
+    where: { id: publicationId },
+    include: {
+      user: {
+        select: {
+          id: true,
+          name: true,
+          username: true,
+          image: true,
+          lastAction: true,
+          profileType: true,
+        },
+      },
+      reactions: {
+        select: {
+          userId: true,
+        },
+      },
+      _count: {
+        select: {
+          PublicationComment: true,
+          reactions: true,
+        },
+      },
+    },
+  });
+
+  if (!publication) {
+    res.status(404).json({ error: "Publication not found" });
+    return;
+  }
+  const isLiked = publication.reactions.some(
+    (reaction) => reaction.userId === user.id
+  );
+  // Retirer le champ reactions de publication
+  const { reactions, ...publicationWithoutReactions } = publication as any;
+  let publicationWithIsLiked = {
+    ...publicationWithoutReactions,
+    isLiked,
+  };
+  res.json(publicationWithIsLiked);
 };
