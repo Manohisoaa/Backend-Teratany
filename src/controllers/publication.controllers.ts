@@ -397,7 +397,7 @@ export const getAllPublicationsController = async (
   }
 };
 
-export const getReactPublicatonController = async (
+export const getReactsPublicationController = async (
   req: Request,
   res: Response
 ) => {
@@ -424,3 +424,29 @@ export const getReactPublicatonController = async (
     res.status(500).json({ error: error });
   }
 };
+
+export const getReactsCommentController = async (
+  req : Request,
+  res : Response,
+) => {
+  const { commentId} = req.params;
+  try {
+    const data = await prisma.commentReaction.findMany({
+      where: {
+        publicationCommentId: commentId,
+      },
+      select: {
+        user: {
+          select: {
+            username: true,
+            id: true,
+            image: true,
+          },
+        },
+      },
+    })
+    res.json(data);
+  } catch ( error) {
+    res.status(500).json({ error: error });
+  }
+}
