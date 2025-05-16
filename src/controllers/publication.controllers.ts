@@ -396,3 +396,31 @@ export const getAllPublicationsController = async (
     res.status(500).json({ error: "Error fetching publications" });
   }
 };
+
+export const getReactPublicatonController = async (
+  req: Request,
+  res: Response
+) => {
+  const { publicationId } = req.params;
+
+  try {
+    const data = await prisma.publicationReaction.findMany({
+      where: {
+        publicationId: publicationId,
+      },
+      select: {
+        user: {
+          select: {
+            username: true,
+            id: true,
+            image: true,
+          },
+        },
+      },
+    });
+
+    res.json(data);
+  } catch (error) {
+    res.status(500).json({ error: error });
+  }
+};
