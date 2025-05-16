@@ -363,6 +363,60 @@ export const getUserPublicatonsController = async (
   }
 };
 
+export const getReactsPublicationController = async (
+  req: Request,
+  res: Response
+) => {
+  const { publicationId } = req.params;
+
+  try {
+    const data = await prisma.publicationReaction.findMany({
+      where: {
+        publicationId: publicationId,
+      },
+      select: {
+        user: {
+          select: {
+            username: true,
+            id: true,
+            image: true,
+          },
+        },
+      },
+    });
+
+    res.json(data);
+  } catch (error) {
+    res.status(500).json({ error: error });
+  }
+};
+
+export const getReactsCommentController = async (
+  req: Request,
+  res: Response
+) => {
+  const { commentId } = req.params;
+  try {
+    const data = await prisma.commentReaction.findMany({
+      where: {
+        publicationCommentId: commentId,
+      },
+      select: {
+        user: {
+          select: {
+            username: true,
+            id: true,
+            image: true,
+          },
+        },
+      },
+    });
+    res.json(data);
+  } catch (error) {
+    res.status(500).json({ error: error });
+  }
+};
+
 export const getAllPublicationsController = async (
   req: Request,
   res: Response
@@ -396,57 +450,3 @@ export const getAllPublicationsController = async (
     res.status(500).json({ error: "Error fetching publications" });
   }
 };
-
-export const getReactsPublicationController = async (
-  req: Request,
-  res: Response
-) => {
-  const { publicationId } = req.params;
-
-  try {
-    const data = await prisma.publicationReaction.findMany({
-      where: {
-        publicationId: publicationId,
-      },
-      select: {
-        user: {
-          select: {
-            username: true,
-            id: true,
-            image: true,
-          },
-        },
-      },
-    });
-
-    res.json(data);
-  } catch (error) {
-    res.status(500).json({ error: error });
-  }
-};
-
-export const getReactsCommentController = async (
-  req : Request,
-  res : Response,
-) => {
-  const { commentId} = req.params;
-  try {
-    const data = await prisma.commentReaction.findMany({
-      where: {
-        publicationCommentId: commentId,
-      },
-      select: {
-        user: {
-          select: {
-            username: true,
-            id: true,
-            image: true,
-          },
-        },
-      },
-    })
-    res.json(data);
-  } catch ( error) {
-    res.status(500).json({ error: error });
-  }
-}
