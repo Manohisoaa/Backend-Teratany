@@ -484,3 +484,73 @@ export const getPublicationController = async (req: Request, res: Response) => {
   };
   res.json(publicationWithIsLiked);
 };
+
+export const getFollowingPublicatonsController = async (
+  req : Request,
+  res : Response 
+) => {
+  const user = await currentUser(req);
+  if (!user) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+  try {
+    const following = await prisma.follow.findMany({
+      where: {
+        followerId: user.id,
+      },
+      select: {
+        followingId: true,
+      },
+    });
+
+    const followingIds = following.map((f) => f.followingId);
+
+    const publications = await prisma.publication.findMany({
+      where: {
+        userId: { in: followingIds },
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            username: true,
+            image: true,
+            lastAction: true,
+            profileType: true,
+          },
+        },
+        reactions: {
+          select: {
+            userId: true,
+          },
+        },
+        _count: {
+          select: {
+            PublicationComment: true,
+            reactions: true,
+          },
+        },
+      },
+    });
+    let publicationWithIsLiked = [];
+    for (const publication of publications) {
+      const isLiked = publication.reactions.some(
+        (reaction) => reaction.userId === user.id
+      );
+      // Retirer le champ reactions de publication
+      const { reactions, ...publicationWithoutReactions } = publication as any;
+      publicationWithIsLiked.push({
+        ...publicationWithoutReactions,
+        isLiked,
+      });
+    }
+    res.json(publicationWithIsLiked);
+  } catch (error) {
+    res.status(500).json({ error });
+  }
+}
