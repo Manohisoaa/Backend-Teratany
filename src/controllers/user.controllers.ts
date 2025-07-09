@@ -224,7 +224,7 @@ export const getUserFollowersController = async (
   const data = await prisma.follow.findMany({
     where: { followingId: id },
     include: {
-      following: {
+      follower: {
         select: {
           id: true,
           name: true,
@@ -247,7 +247,7 @@ export const getUserFollowingController = async (
   const data = await prisma.follow.findMany({
     where: { followerId: id },
     include: {
-      follower: {
+      following: {
         select: {
           id: true,
           name: true,
