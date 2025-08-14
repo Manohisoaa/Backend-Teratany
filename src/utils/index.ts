@@ -16,6 +16,8 @@ export const currentUser = async (req: Request) => {
     const user = await getCurrentUser(decoded.id);
     return user;
   } catch (error) {
+    console.log(error);
+
     throw new Error("Error fetching user data");
   }
 };

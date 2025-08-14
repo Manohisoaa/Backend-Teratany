@@ -104,6 +104,20 @@ export const editProfile = async (
   username: string,
   email: string
 ) => {
+  const currentUser = await prisma.user.findUnique({
+    where: { id: userId },
+  });
+
+  if (await checkUsernameExists(username)) {
+    if (currentUser?.username !== username) {
+      throw new Error("Username already exists");
+    }
+  }
+  if (await checkIfEmailExists(email)) {
+    if (currentUser?.email !== email) {
+      throw new Error("Email already exists");
+    }
+  }
   await prisma.user.update({
     where: { id: userId },
     data: { description: bio, name, username, email },
@@ -111,6 +125,8 @@ export const editProfile = async (
 };
 
 export const updateProfilePicture = async (userId: string, image: string) => {
+  console.log("image", image);
+
   await prisma.user.update({
     where: { id: userId },
     data: { image },

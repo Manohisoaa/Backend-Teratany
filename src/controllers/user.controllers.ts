@@ -118,16 +118,6 @@ export async function updateProfileController(req: Request, res: Response) {
     }
   }
 
-  if (await checkIfEmailExists(email)) {
-    res.status(400).json({ error: "email already exists" });
-    return;
-  }
-
-  if (await checkUsernameExists(username)) {
-    res.status(400).json({ error: "username already exists" });
-    return;
-  }
-
   interface DecodedToken {
     id: string;
   }
@@ -142,13 +132,11 @@ export async function updateProfileController(req: Request, res: Response) {
     await editProfile(decoded.id, bio, name, username, email);
     res.json({ message: "Profile mise à jour avec succès" });
   } catch (error) {
-    res.status(500).json({ error: "Erreur lors de la mise à jour du profile" });
+    res.status(500).json({ error });
   }
 }
 
 export const updatePictureController = async (req: Request, res: Response) => {
-  console.log("here");
-
   const { profilePicture } = req.body;
   const { authorization } = req.headers;
   if (!authorization) {
@@ -174,6 +162,8 @@ export const getCurrentUserController = async (req: Request, res: Response) => {
 
     res.json(user);
   } catch (error) {
+    console.log(error);
+
     res
       .status(500)
       .json({ error: "Erreur lors de la récupération de l'utilisateur" });
